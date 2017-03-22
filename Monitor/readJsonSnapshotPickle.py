@@ -230,10 +230,7 @@ def getDbCursor():
     user = os.environ.get('DETOX_SITESTORAGE_USER')
     pw = os.environ.get('DETOX_SITESTORAGE_PW')
     # open database connection
-    print 'server="%s", db="%s", user="%s", passwd="%s"'%(server,db,user,pw)
-    #server='localhost'
     db = MySQLdb.connect(read_default_file = '/etc/my.cnf', read_default_group = 'mysql-ddm', db = 'IntelROCCS')
-    #db = MySQLdb.connect(host=server,db=db, user=user,passwd=pw)
     # prepare a cursor object using cursor() method
     return db.cursor()
 

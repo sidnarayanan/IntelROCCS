@@ -6,8 +6,8 @@ import re
 from copy import deepcopy
 
 '''Dataset object definition
-		and common functions to 
-		manipulate Datasets'''
+   and common functions to 
+   manipulate Datasets'''
 
 # genesis=int(time.mktime(time.strptime("2014-09-01","%Y-%m-%d")))
 genesis=1378008000
@@ -22,27 +22,28 @@ class Request(object):
 		return cmp(self.timestamp,other.timestamp)
 	def __str__(self):
 		return '%s %s at %i'%('Transferred to' if self.is_xfer else 'Deleted at',
-				                     self.node, self.timestamp)
+							  self.node, self.timestamp)
 
 class Dataset(object):
 		siteList = []
 		"""Object containing relevant dataset properties"""
 		def __init__(self, name):
-				self.name = name
-				self.nFiles = -1
-				self.sizeGB = -1
-				self.nAccesses = {}
-				self.requests = {}
-				self.cTime = genesis
-				self.nSites = -1
-				self.isDeleted = None
+			self.name = name
+			self.nFiles = -1
+			self.sizeGB = -1
+			self.nAccesses = {}
+			self.requests = {}
+			self.cTime = genesis
+			self.nSites = -1
+			self.isDeleted = None
 		def getTimeOnSites(self,start,end,site_pattern='.*',skip_tape=True):
 			start = max(self.cTime,start)
 			end = min(now,end)
 			interval = float(end-start)
 			time_by_site = {}
+			srx = re.compile(site_pattern)
 			for s,_reqs in self.requests.iteritems():
-				if not re.match(site_pattern,s):
+				if not srx.match(s):
 					continue
 				if skip_tape and 'MSS' in s:
 					continue
@@ -87,16 +88,17 @@ class Dataset(object):
 			for s in self.requests:
 				self.requests[s] = sorted(self.requests[s])
 		def addAccesses(self,siteName,n,utime):
-				if n==0:
-						return
-				if siteName not in self.nAccesses:
-						self.nAccesses[siteName]=[]
-				siteAccess = self.nAccesses[siteName]
-				siteAccess.append((utime,n))
+			if n==0:
+					return
+			if siteName not in self.nAccesses:
+					self.nAccesses[siteName]=[]
+			siteAccess = self.nAccesses[siteName]
+			siteAccess.append((utime,n))
 		def getTotalAccesses(self,start=-1,end=-1,site_pattern='.*',skip_tape=True):
 			r=0
+			srx = re.compile(site_pattern)
 			for node,accesses in self.nAccesses.iteritems():
-				if not re.match(site_pattern,node):
+				if not srx.match(node):
 					continue
 				if skip_tape and 'MSS' in node:
 					continue
@@ -108,14 +110,14 @@ class Dataset(object):
 					r += n
 			return r
 		def __str__(self):
-				s = "================================================\n"
-				s += self.name
-				s += "\n\t nFiles = %i"%(self.nFiles)
-				s += "\t sizeGB = %.2f"%(self.sizeGB)
-				s += "\t cTime = %s\n"%(strftime("%Y-%m-%d",gmtime(self.cTime)))
-				s += "\t Movement history:\n"
-				for site,rs in self.requests.iteritems():
-					for r in rs:
-						s += '\n\t\t %s'%(str(r))
-				s += "\n================================================"
-				return s
+			s = "================================================\n"
+			s += self.name
+			s += "\n\t nFiles = %i"%(self.nFiles)
+			s += "\t sizeGB = %.2f"%(self.sizeGB)
+			s += "\t cTime = %s\n"%(strftime("%Y-%m-%d",gmtime(self.cTime)))
+			s += "\t Movement history:\n"
+			for site,rs in self.requests.iteritems():
+				for r in rs:
+					s += '\n\t\t %s'%(str(r))
+			s += "\n================================================"
+			return s

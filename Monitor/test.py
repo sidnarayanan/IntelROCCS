@@ -1,16 +1,14 @@
 #!/usr/bin/env python
 
-from pprint import pprint
-'''
-import requestParse
-d = requestParse.parseDeletion('/data/t3serv014/snarayan/requests_dir/requests_delete_8000.json')
-pprint(d)
-'''
 
 import dynamoDB
 import time
 
-l = dynamoDB.getDatasetsAndProps()
+cursor = dynamoDB.getDbCursor()
 
-ll = [(x[0],int(x[1]),x[2],time.mktime(x[3].timetuple())) for x in l[:10]]
-pprint(ll)
+sql = 'SELECT d.`name`, s.`name`, da.`date`, da.`num_accesses` FROM `dataset_accesses` AS da     INNER JOIN `datasets` AS d ON d.`id` = da.`dataset_id`   INNER JOIN `sites` AS s ON s.`id` = da.`site_id`  ORDER BY da.`date` ASC;' 
+cursor.execute(sql)
+
+for r in cursor.fetchall():
+    if r [0] == '/Charmonium/Run2017B-22Jun2017-v1/MINIAOD':
+        print r

@@ -18,6 +18,7 @@ ROOT.gStyle.SetOptStat(0)
 genesis=1378008000
 nowish = time.time()
 
+PERDATASET = os.getenv('MONITOR_PERDATASET')
 
 def makeActualPlots(site_pattern,dataset_pattern,start,end,jar_file,crb_label,hist_label,root_file,outdir):
     end = min(nowish,end)
@@ -41,18 +42,22 @@ def makeActualPlots(site_pattern,dataset_pattern,start,end,jar_file,crb_label,hi
     else:
         datasets = jar_file
 
+    drx = re.compile('^' + dataset_pattern + '$')
+    srx = re.compile('^' + site_pattern + '$')
+
     for name,dataset in datasets.iteritems():
             if dataset.cTime>end:
                 continue
-            if not re.match(dataset_pattern,name.split('/')[-1]):
+            if not drx.match(name.split('/')[-1]):
                     continue
             if dataset.nFiles==0:
                     # what
                     continue
             sizeGB = dataset.sizeGB
             time_on_sites = dataset.getTimeOnSites(start,end,site_pattern,True)
-            for node,fraction in time_on_sites.iteritems():
-                    if not re.match(site_pattern,node): 
+            if not PERDATASET:
+                for node,fraction in time_on_sites.iteritems():
+                    if not srx.match(node): 
                             continue
                     value = 0
                     if node in dataset.nAccesses:
@@ -60,15 +65,39 @@ def makeActualPlots(site_pattern,dataset_pattern,start,end,jar_file,crb_label,hi
                         value /= float(dataset.nFiles)
                     fillValue = min(max(1,value),14.5)
                     if value == 0:
-                            if dataset.cTime > start:
-                                    fillValue = 0
-                            else:
-                                    fillValue = -1
+                        if dataset.cTime > start:
+                            fillValue = 0
+                        else:
+                            fillValue = -1
                     weight = float(sizeGB * fraction)/1000.
                     hCRB.Fill(fillValue,weight)
                     if (fillValue == 0) or (fillValue == 1):
                             hZeroOne.Fill(value,weight)
                     hTime.Fill(fraction,sizeGB/1000.)
+            else:
+                value = 0
+                total_fraction = 0
+                for node,fraction in time_on_sites.iteritems():
+                    if not srx.match(node): 
+                        continue
+                    total_fraction += fraction
+                    if node in dataset.nAccesses:
+                        value += dataset.getTotalAccesses(start,end,'^'+node+'$',True)
+
+                value /= float(dataset.nFiles)
+                fillValue = min(max(1,value),14.5)
+                if value == 0:
+                    if dataset.cTime > start:
+                        fillValue = 0
+                    else:
+                        fillValue = -1
+                weight = float(sizeGB * total_fraction)/1000.
+                hCRB.Fill(fillValue,weight)
+                if (fillValue == 0) or (fillValue == 1):
+                        hZeroOne.Fill(value,weight)
+                hTime.Fill(total_fraction,sizeGB/1000.)
+
+
 
     print 'Updating',root_file
     fSave = ROOT.TFile(root_file,'UPDATE')

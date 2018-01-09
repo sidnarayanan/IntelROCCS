@@ -5,12 +5,12 @@ cd $MONITOR_DB #preventing temp files from being created in weird places
 
 cp $MONITOR_BASE/html/* $MONITOR_DB/
 
-export REFRESH_PICKLE=1 
+export REFRESH_PICKLE=0 
 
 # this catalogs things for later use 
 export MONITOR_SITES='T12X'
 
-export REFRESH_CACHE=1 
+export REFRESH_CACHE=0 
 export MONITOR_DATASETS='RECO'
 python ${MONITOR_BASE}/monitor.py 
 

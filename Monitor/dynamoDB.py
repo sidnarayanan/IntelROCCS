@@ -22,3 +22,12 @@ def getDatasetsAccesses(cursor=None,limit=''):
 	sql = 'SELECT d.`name`, s.`name`, da.`date`, da.`num_accesses` FROM `dataset_accesses` AS da	 INNER JOIN `datasets` AS d ON d.`id` = da.`dataset_id`	  INNER JOIN `sites` AS s ON s.`id` = da.`site_id`	 ORDER BY da.`date` ASC;'
 	cursor.execute(sql)
 	return cursor.fetchall()
+
+def getDbHistoryCursor():
+		db = MySQLdb.connect(read_default_file = '/etc/my.cnf', read_default_group = 'mysql-dynamo', db = 'dynamohistory')
+		return db.cursor()
+
+
+def getDeletions(cursor=None,limit=''):
+	return
+

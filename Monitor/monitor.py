@@ -50,7 +50,7 @@ if __name__=="__main__":
 
     NPROC = os.getenv('MONITOR_THREADS') # do NOT use >1 thread in prod
     NPROC = int(NPROC) if NPROC else 1
-    print NPROC
+    # print NPROC
 
     genesis=1378008000
     nowish = time.time()
@@ -84,8 +84,9 @@ if __name__=="__main__":
         cursor = dynamoDB.getDbCursor()
         table_dump = dynamoDB.getDatasetsAndProps(cursor)
         datasets = {}
+        drx = re.compile(dataset_regex)
         for name,nfiles,size,dt in table_dump:
-            if not re.match(dataset_regex,name.split('/')[-1]):
+            if not drx.match(name.split('/')[-1]):
                 continue
             ds = Dataset(name)
             ds.nFiles = int(nfiles)
@@ -100,26 +101,27 @@ if __name__=="__main__":
         # import phedex history
         pool = mp.Pool(processes=NPROC)
         all_transfers = pool.map(requestParse.parseTransfer, 
-                                     glob.glob(monitor_db+'/requests/requests_transfer_*.json'))
+                                 glob.glob(monitor_db+'/requests/requests_transfer_*.json'))
+        srx = re.compile(site_regex)
         for reqs in all_transfers:
             for d in reqs:
                 if not d in datasets:
                     continue
                 for t,s in reqs[d]:
-                    if not re.match(site_regex,s):
+                    if not srx.match(s):
                         continue
                     datasets[d].addTransfer(s,t)
         sw.report()
 
         print 'Importing deletion history'
         all_deletions = pool.map(requestParse.parseDeletion, 
-                                     glob.glob(monitor_db+'/requests/requests_delete_*.json'))
+                                 glob.glob(monitor_db+'/requests/requests_delete_*.json'))
         for reqs in all_deletions:
             for d in reqs:
                 if not d in datasets:
                     continue
                 for t,s in reqs[d]:
-                    if not re.match(site_regex,s):
+                    if not srx.match(s):
                         continue
                     datasets[d].addDeletion(s,t)
         sw.report()
@@ -136,7 +138,7 @@ if __name__=="__main__":
         for name,node,dt,n in all_accesses:
             if name not in datasets:
                 continue
-            if not re.match(site_regex,node):
+            if not srx.match(node):
                 continue
             timestamp = time.mktime(dt.timetuple())
             datasets[name].addAccesses(node,n,timestamp)
@@ -153,12 +155,13 @@ if __name__=="__main__":
     # after everything is done, draw plots
     if refresh_plots:
         if not datasets:
+            print 'Importing from pickle'
             datasets = pickle.load(open('monitorCache_'+ site_pattern + '_' + dataset_pattern + '.pkl',"rb"))
 
         plot_site_patterns = ['T1_X','T2_X','T12X']
 
         if 'AOD' in dataset_pattern:
-            plot_dataset_patterns = ['XAODX','MINIAODX','XAODSIM','XAOD']
+            plot_dataset_patterns = ['XAODX','MINIAODX','XAODSIM','XAOD','AODX']
         else:
             plot_dataset_patterns = ['RECO']
 
@@ -168,21 +171,24 @@ if __name__=="__main__":
         date = time.gmtime(now)
         end_dates = [date]
 
-        year = 2015
-        month = 3
-        new_date = time.strptime('%i-%i-%i'%(year,month,last_day[month]),'%Y-%m-%d')
-        while new_date < date:
+        year = 2017
+        month = 12
+        while True:
+            new_date = time.strptime('%i-%i-%i'%(year,month,last_day[month]),'%Y-%m-%d')
+            if new_date > date:
+                break
             end_dates.append(new_date)
             if month==12:
                 year += 1
                 month = 3
             else:
                 month += 3
-            new_date = time.strptime('%i-%i-%i'%(year,month,last_day[month]),'%Y-%m-%d')
+
 
         for plot_dataset_pattern in plot_dataset_patterns:
             for plot_site_pattern in plot_site_patterns:
                 for end_date in end_dates:
+                    print plot_dataset_pattern, plot_site_pattern, end_date
                     end = time.mktime(end_date)
                     if end_date == end_dates[0]:
                         # always refresh the daily file
@@ -191,8 +197,8 @@ if __name__=="__main__":
                     else:
                         str_end_time = time.strftime('%Y-%m-%d',end_date)
                         root_label = plot_site_pattern+'_'+str_end_time+'.root'
-                        if os.path.isfile(monitor_db+'/'+root_label):
-                            continue
+                        # if os.path.isfile(monitor_db+'/'+root_label):
+                        #     continue
                     for interval in intervals:
                         start = end - interval*86400*30
                         plot_dataset_regex = fix_regex(plot_dataset_pattern)

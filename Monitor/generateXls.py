@@ -86,17 +86,17 @@ now = time.time()
 date = time.gmtime(now)
 end_dates = [date]
 
-year = 2015
-month = 3
-new_date = time.strptime('%i-%i-%i'%(year,month,last_day[month]),'%Y-%m-%d')
-while new_date < date:
-    end_dates.append(new_date)
-    if month==12:
-        year += 1
-        month = 3
-    else:
-        month += 3
-    new_date = time.strptime('%i-%i-%i'%(year,month,last_day[month]),'%Y-%m-%d')
+# year = 2015
+# month = 3
+# new_date = time.strptime('%i-%i-%i'%(year,month,last_day[month]),'%Y-%m-%d')
+# while new_date < date:
+#     end_dates.append(new_date)
+#     if month==12:
+#         year += 1
+#         month = 3
+#     else:
+#         month += 3
+#     new_date = time.strptime('%i-%i-%i'%(year,month,last_day[month]),'%Y-%m-%d')
 
 newlines = []
 for end_date in end_dates:
